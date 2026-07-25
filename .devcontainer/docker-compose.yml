@@ -1,0 +1,27 @@
+name: dev-benches
+
+services:
+  rust-bench:
+    env_file: .env
+    image: rust-bench:${USER:-brett}
+    container_name: rust-bench
+    command: sleep infinity
+    working_dir: /workspace
+    tty: true
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+    ulimits:
+      core: -1
+    environment:
+      - RUSTUP_HOME=/opt/rust/rustup
+      - CARGO_HOME=/opt/rust/cargo
+      - RUST_BACKTRACE=1
+      - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+      - DOCKER_HOST=unix:///var/run/docker.sock
+
+networks:
+  default:
+    driver_opts:
+      com.docker.network.driver.mtu: "1400"

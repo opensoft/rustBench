@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SECRETS_FILE="${SONARQUBE_ENV_FILE:-$HOME/.config/sonarqube/sonar.env}"
+
+if [[ -f "$SECRETS_FILE" ]]; then
+    while IFS='=' read -r key value || [[ -n "$key" ]]; do
+        case "$key" in
+            ''|\#*) continue ;;
+            SONARQUBE_TOKEN|SONARQUBE_ORG|SONAR_TOKEN|SONAR_ORGANIZATION|SONAR_HOST_URL|SONARQUBE_URL)
+                export "$key=$value"
+                ;;
+        esac
+    done < "$SECRETS_FILE"
+fi
+
+if [[ -n "${SONARQUBE_TOKEN:-}" ]]; then
+    export SONAR_TOKEN="$SONARQUBE_TOKEN"
+fi
+
+if [[ -z "${SONAR_HOST_URL:-}" && -n "${SONARQUBE_URL:-}" ]]; then
+    export SONAR_HOST_URL="$SONARQUBE_URL"
+fi
+
+export SONAR_HOST_URL="${SONAR_HOST_URL:-https://sonarcloud.io}"
+REPORT="${SONAR_RUST_COVERAGE_REPORT:-lcov.info}"
+
+if [[ -z "${SONAR_TOKEN:-}" ]]; then
+    echo "Missing SONAR_TOKEN or SONARQUBE_TOKEN." >&2
+    echo "Put it in $SECRETS_FILE or export it before running this command." >&2
+    exit 2
+fi
+
+if ! command -v sonar-scanner >/dev/null 2>&1; then
+    echo "sonar-scanner is not on PATH. Rebuild the devBench base image first." >&2
+    exit 2
+fi
+
+if ! command -v cargo-llvm-cov >/dev/null 2>&1; then
+    echo "cargo-llvm-cov is not on PATH. Rebuild rust-bench first." >&2
+    exit 2
+fi
+
+if [[ "${SONAR_SKIP_TESTS:-0}" != "1" ]]; then
+    read -r -a coverage_args <<< "${SONAR_RUST_COVERAGE_ARGS:---workspace --all-features}"
+    cargo llvm-cov "${coverage_args[@]}" --lcov --output-path "$REPORT"
+elif [[ ! -f "$REPORT" ]]; then
+    echo "SONAR_SKIP_TESTS=1 was set, but $REPORT does not exist." >&2
+    exit 2
+fi
+
+sonar-scanner -Dsonar.rust.lcov.reportPaths="$REPORT" "$@"

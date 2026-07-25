@@ -1,0 +1,259 @@
+# syntax=docker/dockerfile:1.7
+
+# Layer 2: Rust Bench Image
+# Extends the shared developer base with comprehensive Rust tooling.
+# USER-AGNOSTIC: Layer 3 creates and personalizes the user.
+
+ARG BASE_IMAGE=dev-bench-base:latest
+FROM ${BASE_IMAGE}
+
+LABEL layer="2"
+LABEL layer.name="rust-bench"
+LABEL layer.version="0.1.0"
+LABEL layer.description="Rust development, analysis, testing, profiling, cross-compilation, and WebAssembly tools"
+LABEL bench.type="rust"
+
+ARG RUST_TOOLCHAIN=stable
+
+USER root
+
+ENV RUSTUP_HOME=/opt/rust/rustup
+ENV CARGO_HOME=/opt/rust/cargo
+ENV PATH=/opt/rust/cargo/bin:/opt/rust/rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin:${PATH}
+ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
+ENV CARGO_INCREMENTAL=1
+ENV RUST_BACKTRACE=1
+ENV BINSTALL_DISABLE_TELEMETRY=true
+
+# Native build, debugger, profiler, cross-compilation, and WASM dependencies.
+RUN apt-get update \
+    && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        clang \
+        cmake \
+        g++-aarch64-linux-gnu \
+        gcc-aarch64-linux-gnu \
+        gdb \
+        graphviz \
+        heaptrack \
+        libclang-dev \
+        libdbus-1-dev \
+        libfontconfig1-dev \
+        libfreetype6-dev \
+        libgit2-dev \
+        libssl-dev \
+        libudev-dev \
+        lld \
+        lldb \
+        llvm \
+        mold \
+        musl-tools \
+        ninja-build \
+        pkg-config \
+        protobuf-compiler \
+        qemu-user-static \
+        valgrind \
+        wabt \
+        binaryen \
+    && if apt-cache show linux-tools-generic >/dev/null 2>&1; then \
+        apt-get install -y --no-install-recommends linux-tools-generic; \
+    fi \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install official stable and nightly toolchains plus supported components.
+RUN mkdir -p "${RUSTUP_HOME}" "${CARGO_HOME}" \
+    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+        | sh -s -- -y --no-modify-path --profile minimal --default-toolchain "${RUST_TOOLCHAIN}" \
+    && rustup default "${RUST_TOOLCHAIN}" \
+    && rustup component add \
+        clippy \
+        llvm-tools-preview \
+        rust-analyzer \
+        rust-src \
+        rustfmt \
+    && rustup toolchain install nightly --profile minimal \
+    && rustup component add --toolchain nightly \
+        clippy \
+        miri \
+        rust-src \
+        rustfmt \
+    && rustup target add \
+        aarch64-unknown-linux-gnu \
+        wasm32-unknown-unknown \
+        wasm32-wasip1 \
+        x86_64-unknown-linux-musl
+
+# Prefer released binaries and fall back to cargo install when a tool does not
+# publish one. Install cargo-binstall from its official release archive to avoid
+# compiling the installer itself on every no-cache bench refresh.
+RUN set -eux; \
+    case "$(dpkg --print-architecture)" in \
+        amd64) BINSTALL_ARCH=x86_64 ;; \
+        arm64) BINSTALL_ARCH=aarch64 ;; \
+        *) echo "Unsupported cargo-binstall architecture: $(dpkg --print-architecture)" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL --proto '=https' --tlsv1.2 \
+        "https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-${BINSTALL_ARCH}-unknown-linux-musl.tgz" \
+        | tar -xz -C "${CARGO_HOME}/bin"; \
+    cargo-binstall --help >/dev/null
+
+# The selection covers the normal build/test/quality/security/profiling/cross/
+# WASM lifecycle without pinning the bench to an old toolchain. Resolution is
+# bounded and continues far enough to report every unavailable upstream crate;
+# the explicit command check below still makes any missing expected tool fail
+# the image build.
+RUN --mount=type=secret,id=github_token \
+    set -eu; \
+    if [ -s /run/secrets/github_token ]; then \
+        export GITHUB_TOKEN="$(tr -d '\r\n' < /run/secrets/github_token)"; \
+    fi; \
+    cargo binstall \
+        --no-confirm \
+        --disable-telemetry \
+        --strategies quick-install,compile \
+        --maximum-resolution-timeout 30 \
+        --continue-on-failure \
+        bacon \
+        cargo-audit \
+        cargo-bloat \
+        cargo-cache \
+        cargo-cyclonedx \
+        cargo-deny \
+        cargo-edit \
+        cargo-expand \
+        cargo-fuzz \
+        cargo-generate \
+        cargo-hack \
+        cargo-insta \
+        cargo-license \
+        cargo-llvm-cov \
+        cargo-machete \
+        cargo-msrv \
+        cargo-mutants \
+        cargo-nextest \
+        cargo-outdated \
+        cargo-release \
+        cargo-sbom \
+        cargo-semver-checks \
+        cargo-show-asm \
+        cargo-sweep \
+        cargo-tarpaulin \
+        cargo-udeps \
+        cargo-update \
+        cargo-vet \
+        cargo-watch \
+        cargo-zigbuild \
+        cross \
+        flamegraph \
+        hyperfine \
+        just \
+        mdbook \
+        sccache \
+        wasm-bindgen-cli \
+        wasm-pack \
+        watchexec-cli \
+    && for tool in \
+        bacon \
+        cargo-audit \
+        cargo-bloat \
+        cargo-cache \
+        cargo-cyclonedx \
+        cargo-deny \
+        cargo-flamegraph \
+        cargo-fuzz \
+        cargo-generate \
+        cargo-hack \
+        cargo-insta \
+        cargo-license \
+        cargo-llvm-cov \
+        cargo-machete \
+        cargo-msrv \
+        cargo-mutants \
+        cargo-nextest \
+        cargo-outdated \
+        cargo-release \
+        cargo-sbom \
+        cargo-semver-checks \
+        cargo-asm \
+        cargo-sweep \
+        cargo-tarpaulin \
+        cargo-udeps \
+        cargo-vet \
+        cargo-watch \
+        cargo-zigbuild \
+        cross \
+        hyperfine \
+        just \
+        mdbook \
+        sccache \
+        wasm-bindgen \
+        wasm-pack \
+        watchexec; do \
+            command -v "$tool" >/dev/null || { echo "Missing expected Rust tool: $tool" >&2; exit 1; }; \
+        done
+
+# These projects publish their own release archives. Keep them on the
+# crate-metadata strategy so an incompatible crates.io dependency graph cannot
+# turn a bench build into an accidental source-build failure.
+RUN --mount=type=secret,id=github_token \
+    set -eu; \
+    if [ -s /run/secrets/github_token ]; then \
+        export GITHUB_TOKEN="$(tr -d '\r\n' < /run/secrets/github_token)"; \
+    fi; \
+    cargo binstall \
+        --no-confirm \
+        --disable-telemetry \
+        --strategies crate-meta-data \
+        --maximum-resolution-timeout 30 \
+        cargo-about \
+        trunk \
+    && command -v cargo-about >/dev/null \
+    && command -v trunk >/dev/null
+
+# cargo-zigbuild delegates native cross-linking to Zig.
+RUN pip3 install --break-system-packages --no-cache-dir ziglang \
+    && ln -s \
+        "$(python3 -c 'from pathlib import Path; import ziglang; print(Path(ziglang.__file__).with_name("zig"))')" \
+        /usr/local/bin/zig \
+    && zig version
+
+COPY files/sonarcloud-rust-coverage /usr/local/bin/sonarcloud-rust-coverage
+COPY scripts/new-rust-project.sh /usr/local/bin/new-rust-project
+
+RUN chmod +x \
+        /usr/local/bin/new-rust-project \
+        /usr/local/bin/sonarcloud-rust-coverage \
+    && mkdir -p /usr/local/share/zsh/site-functions \
+    && rustup completions zsh > /usr/local/share/zsh/site-functions/_rustup \
+    && rustup completions zsh cargo > /usr/local/share/zsh/site-functions/_cargo
+
+# New Layer 3 users inherit useful, unsurprising Rust defaults.
+RUN printf '%s\n' \
+        '' \
+        '# Rust development environment' \
+        'export RUSTUP_HOME=/opt/rust/rustup' \
+        'export CARGO_HOME=/opt/rust/cargo' \
+        'export PATH="$CARGO_HOME/bin:$PATH"' \
+        'export RUST_BACKTRACE=1' \
+        'export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse' \
+        '' \
+        '# Rust workflow aliases' \
+        'alias ct="cargo test"' \
+        'alias cnt="cargo nextest run"' \
+        'alias cc="cargo check"' \
+        'alias cb="cargo build"' \
+        'alias cr="cargo run"' \
+        'alias cfmt="cargo fmt --all"' \
+        'alias cclippy="cargo clippy --workspace --all-targets --all-features"' \
+        'alias cdoc="cargo doc --open --no-deps"' \
+        'alias caudit="cargo audit"' \
+        'alias cdeny="cargo deny check"' \
+        'alias ccover="cargo llvm-cov --workspace --all-features"' \
+        'alias rust-sonar-coverage="sonarcloud-rust-coverage"' \
+        'alias cmiri="cargo +nightly miri test"' \
+        >> /etc/skel/.zshrc
+
+CMD ["sleep", "infinity"]
