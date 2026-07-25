@@ -37,10 +37,15 @@
     "containerEnv": {
         "SHELL": "/bin/zsh",
         "RUSTUP_HOME": "/opt/rust/rustup",
-        "CARGO_HOME": "/opt/rust/cargo",
+        "CARGO_HOME": "/home/${localEnv:USER}/.cargo",
         "RUST_BACKTRACE": "1",
         "CARGO_REGISTRIES_CRATES_IO_PROTOCOL": "sparse",
-        "DOCKER_HOST": "unix:///var/run/docker.sock"
+        "DOCKER_HOST": "unix:///var/run/docker.sock",
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
+        "XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
+        "PULSE_SERVER": "${localEnv:PULSE_SERVER}",
+        "LIBGL_ALWAYS_SOFTWARE": "1"
     },
     "remoteUser": "${localEnv:USER}",
     "updateRemoteUserUID": false,
@@ -68,7 +73,8 @@
         "source=${localEnv:HOME}/.gemini,target=/home/${localEnv:USER}/.gemini,type=bind,consistency=cached",
         "source=${localEnv:HOME}/.copilot-cli,target=/home/${localEnv:USER}/.copilot-cli,type=bind,readonly",
         "source=${localEnv:HOME}/.notebooklm,target=/home/${localEnv:USER}/.notebooklm,type=bind,consistency=cached",
-        "source=${localEnv:HOME}/.notebooklm-mcp-cli,target=/home/${localEnv:USER}/.notebooklm-mcp-cli,type=bind,consistency=cached"
+        "source=${localEnv:HOME}/.notebooklm-mcp-cli,target=/home/${localEnv:USER}/.notebooklm-mcp-cli,type=bind,consistency=cached",
+        "source=/mnt/wslg,target=/mnt/wslg,type=bind"
     ],
     "forwardPorts": [3000, 8000, 8080, 9090],
     "portsAttributes": {

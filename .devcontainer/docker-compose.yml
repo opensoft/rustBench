@@ -16,10 +16,17 @@ services:
       core: -1
     environment:
       - RUSTUP_HOME=/opt/rust/rustup
-      - CARGO_HOME=/opt/rust/cargo
+      - CARGO_HOME=/home/${USER:-brett}/.cargo
       - RUST_BACKTRACE=1
       - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - DISPLAY=${DISPLAY:-:0}
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-wayland-0}
+      - XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/mnt/wslg/runtime-dir}
+      - PULSE_SERVER=${PULSE_SERVER:-unix:/mnt/wslg/PulseServer}
+      - LIBGL_ALWAYS_SOFTWARE=1
+    volumes:
+      - /mnt/wslg:/mnt/wslg
     networks:
       - rust-bench
 
