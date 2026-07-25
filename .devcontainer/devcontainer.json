@@ -37,7 +37,6 @@
     "containerEnv": {
         "SHELL": "/bin/zsh",
         "RUSTUP_HOME": "/opt/rust/rustup",
-        "CARGO_HOME": "/home/${localEnv:USER}/.cargo",
         "RUST_BACKTRACE": "1",
         "CARGO_REGISTRIES_CRATES_IO_PROTOCOL": "sparse",
         "DOCKER_HOST": "unix:///var/run/docker.sock"
@@ -47,7 +46,6 @@
     "workspaceFolder": "/workspace",
     "mounts": [
         "source=rustbench-zshhistory,target=/home/${localEnv:USER}/.zsh_history,type=volume",
-        "source=rustbench-cargo-cache,target=/home/${localEnv:USER}/.cargo,type=volume",
         "source=${localEnv:HOME}/projects,target=/workspace/projects,type=bind",
         "source=${localEnv:HOME}/.zshrc,target=/home/${localEnv:USER}/.zshrc,type=bind,readonly",
         "source=${localEnv:HOME}/.oh-my-zsh,target=/home/${localEnv:USER}/.oh-my-zsh,type=bind,readonly",
