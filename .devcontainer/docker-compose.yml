@@ -23,5 +23,8 @@ services:
 
 networks:
   default:
+    # Keep rustBench in the dev-benches Compose group without trying to
+    # recreate Flutter's active default network with a different MTU.
+    name: rust-bench_default
     driver_opts:
       com.docker.network.driver.mtu: "1400"
