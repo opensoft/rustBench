@@ -16,12 +16,18 @@ services:
       core: -1
     environment:
       - RUSTUP_HOME=/opt/rust/rustup
-      - CARGO_HOME=/opt/rust/cargo
+      - CARGO_HOME=/home/${USER:-brett}/.cargo
       - RUST_BACKTRACE=1
       - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
       - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - rustbench-cargo-cache:/home/${USER:-brett}/.cargo
     networks:
       - rust-bench
+
+volumes:
+  rustbench-cargo-cache:
+    name: rustbench-cargo-cache
 
 networks:
   rust-bench:

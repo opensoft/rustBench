@@ -9,8 +9,8 @@ FROM ${BASE_IMAGE}
 
 LABEL layer="2"
 LABEL layer.name="rust-bench"
-LABEL layer.version="0.1.0"
-LABEL layer.description="Rust development, analysis, testing, profiling, cross-compilation, and WebAssembly tools"
+LABEL layer.version="0.2.0"
+LABEL layer.description="Rust and Tauri development, analysis, testing, profiling, cross-compilation, and WebAssembly tools"
 LABEL bench.type="rust"
 
 ARG RUST_TOOLCHAIN=stable
@@ -33,18 +33,23 @@ RUN apt-get update \
         ca-certificates \
         clang \
         cmake \
+        file \
         g++-aarch64-linux-gnu \
         gcc-aarch64-linux-gnu \
         gdb \
         graphviz \
         heaptrack \
+        libayatana-appindicator3-dev \
         libclang-dev \
         libdbus-1-dev \
         libfontconfig1-dev \
         libfreetype6-dev \
         libgit2-dev \
+        librsvg2-dev \
         libssl-dev \
         libudev-dev \
+        libwebkit2gtk-4.1-dev \
+        libxdo-dev \
         lld \
         lldb \
         llvm \
@@ -56,6 +61,7 @@ RUN apt-get update \
         qemu-user-static \
         valgrind \
         wabt \
+        wget \
         binaryen \
     && if apt-cache show linux-tools-generic >/dev/null 2>&1; then \
         apt-get install -y --no-install-recommends linux-tools-generic; \
@@ -235,8 +241,8 @@ RUN printf '%s\n' \
         '' \
         '# Rust development environment' \
         'export RUSTUP_HOME=/opt/rust/rustup' \
-        'export CARGO_HOME=/opt/rust/cargo' \
-        'export PATH="$CARGO_HOME/bin:$PATH"' \
+        'export CARGO_HOME="$HOME/.cargo"' \
+        'export PATH="$CARGO_HOME/bin:/opt/rust/cargo/bin:$PATH"' \
         'export RUST_BACKTRACE=1' \
         'export CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse' \
         '' \
