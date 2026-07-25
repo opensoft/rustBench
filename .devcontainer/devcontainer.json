@@ -40,18 +40,14 @@
         "CARGO_HOME": "/home/${localEnv:USER}/.cargo",
         "RUST_BACKTRACE": "1",
         "CARGO_REGISTRIES_CRATES_IO_PROTOCOL": "sparse",
-        "DOCKER_HOST": "unix:///var/run/docker.sock",
-        "DISPLAY": "${localEnv:DISPLAY}",
-        "WAYLAND_DISPLAY": "${localEnv:WAYLAND_DISPLAY}",
-        "XDG_RUNTIME_DIR": "${localEnv:XDG_RUNTIME_DIR}",
-        "PULSE_SERVER": "${localEnv:PULSE_SERVER}",
-        "LIBGL_ALWAYS_SOFTWARE": "1"
+        "DOCKER_HOST": "unix:///var/run/docker.sock"
     },
     "remoteUser": "${localEnv:USER}",
     "updateRemoteUserUID": false,
     "workspaceFolder": "/workspace",
     "mounts": [
         "source=rustbench-zshhistory,target=/home/${localEnv:USER}/.zsh_history,type=volume",
+        "source=rustbench-cargo-cache,target=/home/${localEnv:USER}/.cargo,type=volume",
         "source=${localEnv:HOME}/projects,target=/workspace/projects,type=bind",
         "source=${localEnv:HOME}/.zshrc,target=/home/${localEnv:USER}/.zshrc,type=bind,readonly",
         "source=${localEnv:HOME}/.oh-my-zsh,target=/home/${localEnv:USER}/.oh-my-zsh,type=bind,readonly",
@@ -73,8 +69,7 @@
         "source=${localEnv:HOME}/.gemini,target=/home/${localEnv:USER}/.gemini,type=bind,consistency=cached",
         "source=${localEnv:HOME}/.copilot-cli,target=/home/${localEnv:USER}/.copilot-cli,type=bind,readonly",
         "source=${localEnv:HOME}/.notebooklm,target=/home/${localEnv:USER}/.notebooklm,type=bind,consistency=cached",
-        "source=${localEnv:HOME}/.notebooklm-mcp-cli,target=/home/${localEnv:USER}/.notebooklm-mcp-cli,type=bind,consistency=cached",
-        "source=/mnt/wslg,target=/mnt/wslg,type=bind"
+        "source=${localEnv:HOME}/.notebooklm-mcp-cli,target=/home/${localEnv:USER}/.notebooklm-mcp-cli,type=bind,consistency=cached"
     ],
     "forwardPorts": [3000, 8000, 8080, 9090],
     "portsAttributes": {

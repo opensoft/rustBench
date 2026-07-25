@@ -44,15 +44,17 @@ credentials and project directories.
   AppIndicator, XDO, and librsvg development libraries
 
 Cargo downloads and source builds use the current user's writable
-`$HOME/.cargo` cache. Shared preinstalled Rust tools remain available from
-`/opt/rust/cargo/bin`.
+`$HOME/.cargo` cache, persisted in the `rustbench-cargo-cache` Docker volume
+across container recreations. Shared preinstalled Rust tools remain available
+from `/opt/rust/cargo/bin`.
 
 ### Tauri desktop applications
 
-On Windows/WSL, rustBench forwards the WSLg display, Wayland, and PulseAudio
-sockets into the container and uses Mesa software rendering for predictable
-WebKitGTK behavior without exposing a host GPU device. Start a Tauri
-application from its project directory:
+On Windows/WSL, the workBenches Wave launcher automatically applies
+`.devcontainer/docker-compose.wslg.yml`. The opt-in override forwards the WSLg
+display, Wayland, and PulseAudio sockets into the container and uses Mesa
+software rendering for predictable WebKitGTK behavior without exposing a host
+GPU device. Start a Tauri application from its project directory:
 
 ```bash
 pnpm install
@@ -60,8 +62,18 @@ pnpm tauri dev
 ```
 
 The application window opens on the Windows desktop. WSLg must be available at
-`/mnt/wslg`; standard native Linux Docker hosts can supply equivalent display
-socket mounts and environment variables in a local Compose override.
+`/mnt/wslg`. To start the container directly rather than through Wave:
+
+```bash
+docker compose \
+  -f .devcontainer/docker-compose.yml \
+  -f .devcontainer/docker-compose.wslg.yml \
+  up -d rust-bench
+```
+
+The base Compose and Dev Container configurations remain platform-neutral.
+Native Linux hosts can supply their display socket mounts and environment
+variables in a local Compose override.
 
 ## Build and launch
 
