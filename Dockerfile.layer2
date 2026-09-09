@@ -19,7 +19,7 @@ USER root
 
 ENV RUSTUP_HOME=/opt/rust/rustup
 ENV CARGO_HOME=/opt/rust/cargo
-ENV PATH=/opt/rust/cargo/bin:/opt/rust/rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin:${PATH}
+ENV PATH=/opt/rust/cargo/bin:/opt/rust/rustup/toolchains/${RUST_TOOLCHAIN}-x86_64-unknown-linux-gnu/bin:${PATH}
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
 ENV CARGO_INCREMENTAL=1
 ENV RUST_BACKTRACE=1
@@ -111,6 +111,13 @@ RUN set -eux; \
 # bounded and continues far enough to report every unavailable upstream crate;
 # the explicit command check below still makes any missing expected tool fail
 # the image build.
+# --locked matters for the "compile" fallback: `cargo install` re-resolves
+# dependencies to the newest semver-compatible versions instead of the
+# crate's own committed Cargo.lock. Without it, a source build can pull in
+# an unrelated dependency release with its own bugs (e.g. tinyvec 1.13.0
+# failing with "cannot find macro `vec` in this scope" as a transitive
+# dependency of watchexec-cli) even though the published release compiles
+# fine against its tested lockfile.
 RUN --mount=type=secret,id=github_token \
     set -eu; \
     if [ -s /run/secrets/github_token ]; then \
@@ -119,6 +126,7 @@ RUN --mount=type=secret,id=github_token \
     cargo binstall \
         --no-confirm \
         --disable-telemetry \
+        --locked \
         --strategies quick-install,compile \
         --maximum-resolution-timeout 30 \
         --continue-on-failure \
