@@ -36,6 +36,7 @@
     },
     "containerEnv": {
         "SHELL": "/bin/zsh",
+        "HISTFILE": "/home/${localEnv:USER}/.workbenches-history/.zsh_history",
         "RUSTUP_HOME": "/opt/rust/rustup",
         "RUST_BACKTRACE": "1",
         "CARGO_REGISTRIES_CRATES_IO_PROTOCOL": "sparse",
@@ -45,7 +46,7 @@
     "updateRemoteUserUID": false,
     "workspaceFolder": "/workspace",
     "mounts": [
-        "source=rustbench-zshhistory,target=/home/${localEnv:USER}/.zsh_history,type=volume",
+        "source=rustbench-zshhistory,target=/home/${localEnv:USER}/.workbenches-history,type=volume",
         "source=${localEnv:HOME}/projects,target=/workspace/projects,type=bind",
         "source=${localEnv:HOME}/.zshrc,target=/home/${localEnv:USER}/.zshrc,type=bind,readonly",
         "source=${localEnv:HOME}/.oh-my-zsh,target=/home/${localEnv:USER}/.oh-my-zsh,type=bind,readonly",
