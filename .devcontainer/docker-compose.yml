@@ -5,7 +5,7 @@ services:
     env_file: .env
     image: rust-bench:${USER:-brett}
     container_name: rust-bench
-    command: sleep infinity
+    command: ["/bin/bash", "-c", 'sudo install -d -m 0700 -o "$$(id -u)" -g "$$(id -g)" "$$HOME/.workbenches-history" && if [ -f "$$HOME/.workbenches-history/.zsh_history" ]; then sudo chown "$$(id -u):$$(id -g)" "$$HOME/.workbenches-history/.zsh_history"; fi && exec sleep infinity']
     working_dir: /workspace
     tty: true
     cap_add:
@@ -15,17 +15,22 @@ services:
     ulimits:
       core: -1
     environment:
+      - HISTFILE=/home/${USER:-brett}/.workbenches-history/.zsh_history
       - RUSTUP_HOME=/opt/rust/rustup
       - CARGO_HOME=/home/${USER:-brett}/.cargo
       - RUST_BACKTRACE=1
       - CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
+      - rustbench-zshhistory:/home/${USER:-brett}/.workbenches-history
       - rustbench-cargo-cache:/home/${USER:-brett}/.cargo
     networks:
       - rust-bench
 
 volumes:
+  rustbench-zshhistory:
+    # Retain the existing Compose volume; override for a legacy engine name.
+    name: ${WORKBENCH_HISTORY_VOLUME:-dev-benches_rustbench-zshhistory}
   rustbench-cargo-cache:
     name: rustbench-cargo-cache
 
