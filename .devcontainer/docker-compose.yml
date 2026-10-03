@@ -29,6 +29,8 @@ services:
 
 volumes:
   rustbench-zshhistory:
+    # Retain the existing Compose volume; override for a legacy engine name.
+    name: ${WORKBENCH_HISTORY_VOLUME:-dev-benches_rustbench-zshhistory}
   rustbench-cargo-cache:
     name: rustbench-cargo-cache
 
